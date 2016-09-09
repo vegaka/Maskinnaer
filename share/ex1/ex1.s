@@ -81,35 +81,79 @@
 	.globl  _reset
 	.type   _reset, %function
 	.thumb_func
-_reset: 
-	ldr r1, cmu_base_addr
+_reset:
+	/* Enable GPIO clock */
+	ldr r1, =CMU_BASE
 	ldr r2, [r1, #CMU_HFPERCLKEN0]
 	mov r3, #1
 	lsl r3, r3, #CMU_HFPERCLKEN0_GPIO
 	orr r2, r2, r3
 	str r2, [r1, #CMU_HFPERCLKEN0]
 	
-	mov r1, 0x1
-	ldr r2, gpio_pa_base
+	/* Set GPIO A drive strength */
+	mov r1, 0x2
+	ldr r2, =GPIO_PA_BASE
 	str r1, [r2, #GPIO_CTRL]
 	
+	/* Enable output on pin 8-15 on GPIO A */
 	mov r1, 0x55555555
-	ldr r2, gpio_pa_base
+	ldr r2, =GPIO_PA_BASE
 	str r1, [r2, #GPIO_MODEH]
 	
-	mov r1, 0xa
-	ldr r2, gpio_pa_base
+	/* Enable input on pin 0-7 on GPIO C */
+	mov r1, 0x33333333
+	ldr r2, =GPIO_PC_BASE
+	str r1, [r2, #GPIO_MODEL]
+
+	/* Enable internal pull-up on GPIO C */
+	mov r0, 0xff
+	str r0, [r2, #GPIO_DOUT]
+
+	/* Enable GPIO interrupts */
+	mov r0, 0x22222222
+	ldr r1, =GPIO_BASE
+	str r0, [r1, #GPIO_EXTIPSELL]
+	mov r2, 0xff
+	str r2, [r1, #GPIO_EXTIFALL]
+	str r2, [r1, #GPIO_EXTIRISE]
+	str r2, [r1, #GPIO_IEN]
+	ldr r3, =0x802
+	ldr r4, =ISER0
+	str r3, [r4]
+
+	/*bl resetLights*/
+	wfi
+
+waitForInterrupt:
+	wfi
+	b waitForInterrupt
+
+/* Poll button states */
+/*poll:
+	push {r0-r5, lr}
+	bl resetLights
+
+	ldr r0, =GPIO_PC_BASE
+	ldr r1, [r0, #GPIO_DIN]
+	lsl r1, r1, #8
+	
+	ldr r4, =GPIO_PA_BASE
+	ldr r5, [r4, #GPIO_DOUT]
+	and r5, r5, r1
+	str r5, [r4, #GPIO_DOUT]
+	pop {r0-r5, pc}
+*/
+
+/* Turns all LEDs off */
+/*resetLights:
+	push {r1-r3,lr}
+	mov r1, 0xff00
+	ldr r2, =GPIO_PA_BASE
 	ldr r3, [r2, #GPIO_DOUT]
-	mov r4, #1
-	lsl r4, r4, r1
-	orr r3, r3, r4
+	orr r3, r1, r3
 	str r3, [r2, #GPIO_DOUT]
-	
-cmu_base_addr:
-	.long CMU_BASE
-	
-gpio_pa_base:
-	.long GPIO_PA_BASE
+	pop {r1-r3,pc}
+*/
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -119,8 +163,26 @@ gpio_pa_base:
 /////////////////////////////////////////////////////////////////////////////
 
     .thumb_func
-gpio_handler:  
-	b .  // do nothing
+gpio_handler:
+	mov r1, 0xff00
+	ldr r2, =GPIO_PA_BASE
+	ldr r3, [r2, #GPIO_DOUT]
+	orr r3, r1, r3
+	str r3, [r2, #GPIO_DOUT]
+
+	ldr r0, =GPIO_PC_BASE
+	ldr r1, [r0, #GPIO_DIN]
+	lsl r1, r1, #8
+	
+	ldr r4, =GPIO_PA_BASE
+	ldr r5, [r4, #GPIO_DOUT]
+	and r5, r5, r1
+	str r5, [r4, #GPIO_DOUT]
+
+	ldr r1, =GPIO_BASE
+	ldr r2, [r1, #GPIO_IF]
+	str r2, [r1, #GPIO_IFC]
+	bx lr
 
 /////////////////////////////////////////////////////////////////////////////
 

@@ -82,7 +82,7 @@
 	.type   _reset, %function
 	.thumb_func
 _reset: 
-	ldr r1, cmu_base_addr
+	ldr r1, =CMU_BASE
 	ldr r2, [r1, #CMU_HFPERCLKEN0]
 	mov r3, #1
 	lsl r3, r3, #CMU_HFPERCLKEN0_GPIO
@@ -90,7 +90,7 @@ _reset:
 	str r2, [r1, #CMU_HFPERCLKEN0]
 	
 	mov r1, 0x1
-	ldr r2, gpio_pa_base
+	ldr r2, =GPIO_PA_BASE
 	str r1, [r2, #GPIO_CTRL]
 	
 	mov r1, 0x55555555
