@@ -121,39 +121,11 @@ _reset:
 	ldr r4, =ISER0
 	str r3, [r4]
 
-	/*bl resetLights*/
 	wfi
 
 waitForInterrupt:
 	wfi
 	b waitForInterrupt
-
-/* Poll button states */
-/*poll:
-	push {r0-r5, lr}
-	bl resetLights
-
-	ldr r0, =GPIO_PC_BASE
-	ldr r1, [r0, #GPIO_DIN]
-	lsl r1, r1, #8
-	
-	ldr r4, =GPIO_PA_BASE
-	ldr r5, [r4, #GPIO_DOUT]
-	and r5, r5, r1
-	str r5, [r4, #GPIO_DOUT]
-	pop {r0-r5, pc}
-*/
-
-/* Turns all LEDs off */
-/*resetLights:
-	push {r1-r3,lr}
-	mov r1, 0xff00
-	ldr r2, =GPIO_PA_BASE
-	ldr r3, [r2, #GPIO_DOUT]
-	orr r3, r1, r3
-	str r3, [r2, #GPIO_DOUT]
-	pop {r1-r3,pc}
-*/
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -164,21 +136,25 @@ waitForInterrupt:
 
     .thumb_func
 gpio_handler:
+	/* Reset lights */
 	mov r1, 0xff00
 	ldr r2, =GPIO_PA_BASE
 	ldr r3, [r2, #GPIO_DOUT]
 	orr r3, r1, r3
 	str r3, [r2, #GPIO_DOUT]
 
+	/* Check button states */
 	ldr r0, =GPIO_PC_BASE
 	ldr r1, [r0, #GPIO_DIN]
 	lsl r1, r1, #8
 	
+	/* Turn on lights according to buttons pressed */
 	ldr r4, =GPIO_PA_BASE
 	ldr r5, [r4, #GPIO_DOUT]
 	and r5, r5, r1
 	str r5, [r4, #GPIO_DOUT]
 
+	/* Cleanup */
 	ldr r1, =GPIO_BASE
 	ldr r2, [r1, #GPIO_IF]
 	str r2, [r1, #GPIO_IFC]

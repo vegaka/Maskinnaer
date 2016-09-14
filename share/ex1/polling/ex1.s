@@ -81,7 +81,8 @@
 	.globl  _reset
 	.type   _reset, %function
 	.thumb_func
-_reset: 
+_reset:
+	/* Enable GPIO clock */
 	ldr r1, =CMU_BASE
 	ldr r2, [r1, #CMU_HFPERCLKEN0]
 	mov r3, #1
@@ -89,27 +90,47 @@ _reset:
 	orr r2, r2, r3
 	str r2, [r1, #CMU_HFPERCLKEN0]
 	
-	mov r1, 0x1
+	/* Set GPIO A drive strength */
+	mov r1, 0x2
 	ldr r2, =GPIO_PA_BASE
 	str r1, [r2, #GPIO_CTRL]
 	
+	/* Enable output on pin 8-15 on GPIO A */
 	mov r1, 0x55555555
-	ldr r2, gpio_pa_base
+	ldr r2, =GPIO_PA_BASE
 	str r1, [r2, #GPIO_MODEH]
 	
-	mov r1, 0xa
-	ldr r2, gpio_pa_base
+	/* Enable input on pin 0-7 on GPIO C */
+	mov r1, 0x33333333
+	ldr r2, =GPIO_PC_BASE
+	str r1, [r2, #GPIO_MODEL]
+
+	/* Enable internal pull-up on GPIO C */
+	mov r0, 0xff
+	str r0, [r2, #GPIO_DOUT]
+
+/* Poll button states */
+poll:
+	bl resetLights
+
+	ldr r0, =GPIO_PC_BASE
+	ldr r1, [r0, #GPIO_DIN]
+	lsl r1, r1, #8
+	
+	ldr r4, =GPIO_PA_BASE
+	ldr r5, [r4, #GPIO_DOUT]
+	and r5, r5, r1
+	str r5, [r4, #GPIO_DOUT]
+
+/* Turns all LEDs off */
+resetLights:
+	push {lr}
+	mov r1, 0xff00
+	ldr r2, =GPIO_PA_BASE
 	ldr r3, [r2, #GPIO_DOUT]
-	mov r4, #1
-	lsl r4, r4, r1
-	orr r3, r3, r4
+	orr r3, r1, r3
 	str r3, [r2, #GPIO_DOUT]
-	
-cmu_base_addr:
-	.long CMU_BASE
-	
-gpio_pa_base:
-	.long GPIO_PA_BASE
+	pop {pc}
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -119,7 +140,7 @@ gpio_pa_base:
 /////////////////////////////////////////////////////////////////////////////
 
     .thumb_func
-gpio_handler:  
+gpio_handler:
 	b .  // do nothing
 
 /////////////////////////////////////////////////////////////////////////////
@@ -127,4 +148,3 @@ gpio_handler:
     .thumb_func
 dummy_handler:  
 	b .  // do nothing
-
