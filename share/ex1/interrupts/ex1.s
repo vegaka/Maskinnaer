@@ -89,17 +89,17 @@ _reset:
 	lsl r3, r3, #CMU_HFPERCLKEN0_GPIO
 	orr r2, r2, r3
 	str r2, [r1, #CMU_HFPERCLKEN0]
-	
+
 	/* Set GPIO A drive strength */
 	mov r1, 0x2
 	ldr r2, =GPIO_PA_BASE
 	str r1, [r2, #GPIO_CTRL]
-	
+
 	/* Enable output on pin 8-15 on GPIO A */
 	mov r1, 0x55555555
 	ldr r2, =GPIO_PA_BASE
 	str r1, [r2, #GPIO_MODEH]
-	
+
 	/* Enable input on pin 0-7 on GPIO C */
 	mov r1, 0x33333333
 	ldr r2, =GPIO_PC_BASE
@@ -121,11 +121,12 @@ _reset:
 	ldr r4, =ISER0
 	str r3, [r4]
 
-	wfi
+	/* Activate sleep mode */
+	mov r0, #6
+	ldr r1, =SCR
+	str r0, [r1]
 
-waitForInterrupt:
 	wfi
-	b waitForInterrupt
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -147,7 +148,7 @@ gpio_handler:
 	ldr r0, =GPIO_PC_BASE
 	ldr r1, [r0, #GPIO_DIN]
 	lsl r1, r1, #8
-	
+
 	/* Turn on lights according to buttons pressed */
 	ldr r4, =GPIO_PA_BASE
 	ldr r5, [r4, #GPIO_DOUT]
@@ -163,6 +164,5 @@ gpio_handler:
 /////////////////////////////////////////////////////////////////////////////
 
     .thumb_func
-dummy_handler:  
+dummy_handler:
 	b .  // do nothing
-
