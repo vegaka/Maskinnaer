@@ -2,15 +2,18 @@
 #include <stdbool.h>
 
 #include "efm32gg.h"
+#include "dac.h"
+#include "tone_generators.h"
+#include "timer.h"
 
-/* 
-  TODO calculate the appropriate sample period for the sound wave(s) 
+/*
+  TODO calculate the appropriate sample period for the sound wave(s)
   you want to generate. The core clock (which the timer clock is derived
   from) runs at 14 MHz by default. Also remember that the timer counter
   registers are 16 bits.
 */
 /* The period between sound samples, in clock cycles */
-#define   SAMPLE_PERIOD   0
+#define   SAMPLE_PERIOD   44100
 
 /* Declaration of peripheral setup functions */
 void setupGPIO();
@@ -46,9 +49,25 @@ void setupNVIC()
 	   You will need TIMER1, GPIO odd and GPIO even interrupt handling for this
 	   assignment.
 	 */
+
+	 
 }
 
-/* if other interrupt handlers are needed, use the following names: 
+/*
+uint32_t counter = 0;
+
+while (true)
+{
+	//Sound
+	*DAC0_CH0DATA = sineWave(440, counter, 4096 / 2, 1000000);
+	*DAC0_CH1DATA = sineWave(440, counter, 4096 / 2, 1000000);
+	counter++;
+
+	//Control lights
+	*GPIO_PA_DOUT = *GPIO_PC_DIN << 8;
+}*/
+
+/* if other interrupt handlers are needed, use the following names:
    NMI_Handler
    HardFault_Handler
    MemManage_Handler
