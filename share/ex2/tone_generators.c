@@ -12,7 +12,7 @@ int sineWave(int freq, int time, int amp, int samplingFreq) {
 
 int squareWave(int freq, int time, int amp, int samplingFreq) {
     //printf("%f", amp * (sin(2 * PI * time/samplingFreq * freq) > 0 ? 1 : -1 ) / 2);
-    return amp/2 * (sin(2 * PI * time/samplingFreq * freq) > 0 ? 1 : -1 );
+    return amp * (sin(2 * PI * time/samplingFreq * freq) > 0 ? 1 : 0 );
 }
 
 int triangleWave(int freq, int time, int amp, int samplingFreq) {

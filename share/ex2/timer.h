@@ -1,1 +1,1 @@
-void setupTimer(uint16_t period);
+void setupTimer(uint32_t period);

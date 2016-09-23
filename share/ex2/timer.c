@@ -5,7 +5,7 @@
 #include "timer.h"
 
 /* function to setup the timer */
-void setupTimer(uint16_t period)
+void setupTimer(uint32_t period)
 {
 	/*
 	   TODO enable and set up the timer
@@ -20,6 +20,9 @@ void setupTimer(uint16_t period)
 
 	 //Enable clock to timer by setting bit 6 in CMU_HFPERCLKEN0
 	 *CMU_HFPERCLKEN0 = *CMU_HFPERCLKEN0 | (1 << 6);
+
+	 // Count up mode
+	 //*TIMER1_CTRL = *TIMER1_CTRL & (~1);
 
 	 //Write the period to register TIMER1_TOP
 	 *TIMER1_TOP = period;
