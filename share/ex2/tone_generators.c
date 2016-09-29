@@ -1,28 +1,28 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "tone_generators.h"
+#include <inttypes.h>
+#include "functions.h"
 
 #define PI 3.14159265
 
-int sineWave(int freq, int time, int amp, int samplingFreq) {
-    //printf("%f", amp * sin(2 * PI * time/samplingFreq * freq) / 2);
-    return amp/2 * sin(2 * PI * time/samplingFreq * freq) + (amp / 2);
+uint32_t sineWave(int freq, int time, int amp, int samplingFreq) {
+    uint32_t temp = amp/2 * sin(2 * PI * time/samplingFreq * freq) + 2048;
+    return temp;
 }
 
-int squareWave(int freq, int time, int amp, int samplingFreq) {
-    //printf("%f", amp * (sin(2 * PI * time/samplingFreq * freq) > 0 ? 1 : -1 ) / 2);
-    return amp * (sin(2 * PI * time/samplingFreq * freq) > 0 ? 1 : 0 );
+uint32_t squareWave(int freq, int time, int amp, int samplingFreq) {
+    uint32_t temp = amp/2 * (sin(2 * PI * time/samplingFreq * freq) > 0 ? 1 : -1 ) + 2048;
+    return temp;
 }
 
-int triangleWave(int freq, int time, int amp, int samplingFreq) {
+uint32_t triangleWave(int freq, int time, int amp, int samplingFreq) {
     double progress = (double)time*freq/(samplingFreq) - floor(time*freq/(samplingFreq));
-    //printf("%f", amp * ((progress < 0.5 ? progress : 1- progress)*2-0.5));
-    return amp * ((progress < 0.5 ? progress : 1- progress)*2-0.5);
+    uint32_t temp = amp/2 * (progress < 0.5 ? 2*progress : 2 - 2*progress) + 2048;
+    return temp;
 }
 
 int sawtoothWave(int freq, int time, int amp, int samplingFreq) {
     double progress = (double)time*freq/(samplingFreq) - floor(time*freq/(samplingFreq));
-    //printf("%f", amp * ((progress) -0.5));
     return amp * (progress - 0.5);
 }
