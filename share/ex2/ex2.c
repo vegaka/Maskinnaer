@@ -54,7 +54,7 @@ void setupNVIC()
    *GPIO_EXTIFALL = 0xff;
    *GPIO_IEN = 0xff;
    *ISER0 = 0b1100000000010;
-	 
+
 }
 
 /*

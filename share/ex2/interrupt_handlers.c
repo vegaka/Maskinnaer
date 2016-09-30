@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -15,8 +16,8 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 
 	//Sound
 	//int sample = squareWave(440, counter, 4096 / 16, 50000);
-	//*DAC0_CH0DATA = squareWave(440, counter, 4096 / 2, 1000000);
-	//*DAC0_CH1DATA = squareWave(440, counter, 4096 / 2, 1000000);
+	*DAC0_CH0DATA = sineWave(440, counter, 4096 / 2, 50000);
+	*DAC0_CH1DATA = sineWave(440, counter, 4096 / 2, 50000);
 	//*DAC0_CH0DATA = sample;
 	//*DAC0_CH1DATA = sample;
 

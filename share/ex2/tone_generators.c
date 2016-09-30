@@ -2,13 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include "functions.h"
+
+#include "sineTables.h"
 
 #define PI 3.14159265
 
+
 uint32_t sineWave(int freq, int time, int amp, int samplingFreq) {
-    uint32_t temp = amp/2 * sin(2 * PI * time/samplingFreq * freq) + 2048;
-    return temp;
+    //uint32_t temp = amp/2 * sin(2 * PI * time/samplingFreq * freq) + 2048;
+    int temp = (int)floor(freq * 2048 / samplingFreq);
+    int temp2 = (time * temp) % 1024;
+    return sineList[temp2] / 2 + 1024;
 }
 
 uint32_t squareWave(int freq, int time, int amp, int samplingFreq) {
