@@ -5,6 +5,7 @@
 #include "interrupt_handlers.h"
 #include "efm32gg.h"
 #include "tone_generators.h"
+#include "sounds.h"
 
 /* TIMER1 interrupt handler */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
@@ -15,11 +16,21 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	 */
 
 	//Sound
-	//int sample = squareWave(440, counter, 4096 / 16, 50000);
-	*DAC0_CH0DATA = sineWave(440, counter, 4096 / 2, 50000);
-	*DAC0_CH1DATA = sineWave(440, counter, 4096 / 2, 50000);
-	//*DAC0_CH0DATA = sample;
-	//*DAC0_CH1DATA = sample;
+	/*uint32_t samplesPerNote = 7250;
+	int noteArrayIndex = floor(counter / samplesPerNote);
+	int index = noteArrayIndex;
+
+	if (noteArrayIndex < 23)
+	{
+		*DAC0_CH0DATA = sineWave(startUpSoundRight[index] * 2, counter, 4096 / 2, 50000, &phaseRight);
+		*DAC0_CH1DATA = sineWave(startUpSoundLeft[index] * 2, counter, 4096 / 2, 50000, &phaseLeft);
+	}*/
+
+	if (counter < 1024)
+	{
+		*DAC0_CH0DATA = test(counter);
+		*DAC0_CH1DATA = test(counter);
+	}
 
 	counter++;
 
@@ -34,6 +45,7 @@ void __attribute__ ((interrupt)) GPIO_EVEN_IRQHandler()
 {
 	/* TODO handle button pressed event, remember to clear pending interrupt */
 	*GPIO_PA_DOUT = ~(*GPIO_PA_DOUT);
+	counter = 0;
 
 	// Cleanup
 	*GPIO_IFC = *GPIO_IF;
@@ -44,6 +56,7 @@ void __attribute__ ((interrupt)) GPIO_ODD_IRQHandler()
 {
 	/* TODO handle button pressed event, remember to clear pending interrupt */
 	*GPIO_PA_DOUT = ~(*GPIO_PA_DOUT);
+	counter = 0;
 
 	// Cleanup
 	*GPIO_IFC = *GPIO_IF;

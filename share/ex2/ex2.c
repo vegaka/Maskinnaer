@@ -57,20 +57,6 @@ void setupNVIC()
 
 }
 
-/*
-uint32_t counter = 0;
-
-while (true)
-{
-	//Sound
-	*DAC0_CH0DATA = sineWave(440, counter, 4096 / 2, 1000000);
-	*DAC0_CH1DATA = sineWave(440, counter, 4096 / 2, 1000000);
-	counter++;
-
-	//Control lights
-	*GPIO_PA_DOUT = *GPIO_PC_DIN << 8;
-}*/
-
 /* if other interrupt handlers are needed, use the following names:
    NMI_Handler
    HardFault_Handler
