@@ -31,7 +31,25 @@ int sawtoothWave(int freq, int time, int amp, int samplingFreq) {
     return amp * (progress - 0.5);
 }
 
-int test(uint32_t counter)
+int hitEffect(uint32_t counter)
 {
-  return sineList[counter] / 2 + 1024;
+  return sineList[counter % 1024] / 2 + 1024;
+}
+
+int metal_effect(uint32_t counter)
+{
+    int temp_counter = (counter * 20) % 1024;
+    return sineList[temp_counter] / 2 + 1024;
+}
+
+int win_effect(uint32_t counter)
+{
+    if (counter < 1024 * 3)
+    {
+        int temp_counter = (counter * 9) % 1024;
+        return sineList[temp_counter] / 2 + 1024;
+    } else {
+        int temp_counter = (counter * 12) % 1024;
+        return sineList[temp_counter] / 2 + 1024;
+    }
 }

@@ -22,15 +22,17 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 
 	if (noteArrayIndex < 23)
 	{
-		*DAC0_CH0DATA = sineWave(startUpSoundRight[index] * 2, counter, 4096 / 2, 50000, &phaseRight);
-		*DAC0_CH1DATA = sineWave(startUpSoundLeft[index] * 2, counter, 4096 / 2, 50000, &phaseLeft);
+		*DAC0_CH0DATA = sineWave(startUpSoundLeft[index], counter, 4096 / 2, 25000, &phaseLeft);
+		*DAC0_CH1DATA = sineWave(startUpSoundRight[index] * 2, counter, 4096 / 2, 25000, &phaseRight);
 	}*/
 
-	if (counter < 1024)
+	if (counter < 1024 * 10)
 	{
-		*DAC0_CH0DATA = test(counter);
-		*DAC0_CH1DATA = test(counter);
+		*DAC0_CH0DATA = win_effect(counter);
+		*DAC0_CH1DATA = win_effect(counter);
 	}
+
+
 
 	counter++;
 

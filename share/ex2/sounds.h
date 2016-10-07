@@ -1,5 +1,5 @@
-#ifndef SOUDS_H
-#define SOUDS_H
+#ifndef SOUNDS_H
+#define SOUNDS_H
 
 #define G2 98
 #define A2 110
@@ -25,7 +25,7 @@
 #define G5 784
 
 int startUpSoundLeft[23] = {
-  G4, G4, C5, C5, C5, C5, D5, E5, E5, D5, D5, C5, C5, B4, B4, A4, A4, A4, B4, C5,
+  G4, G4, C5, C5, C5, D5, E5, E5, D5, D5, C5, C5, B4, B4, A4, A4, A4, B4, C5, C5,
   G4, G4, G4
 };
 
