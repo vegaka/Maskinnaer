@@ -4,11 +4,11 @@
 void playEffects()
 {
 	// Melody
-	if (melody_counter < MELODY_NOTES * SAMPLES_PER_NOTE) 
+	if (melody_counter < MELODY_NOTES * SAMPLES_PER_NOTE)
 	{
-		int noteArrayIndex = floor(melody_counter / SAMPLES_PER_NOTE);
+		int note_array_index = floor(melody_counter / SAMPLES_PER_NOTE);
 
-		uint32_t sample = sineWave(startUpSoundLeft[noteArrayIndex], melody_counter, 4096 / 2, 25000, &phaseLeft);
+		uint32_t sample = sineWave(start_up_sound_left[note_array_index], melody_counter, 4096 / 2, 25000, &phase_left);
 		*DAC0_CH0DATA = sample;
 		*DAC0_CH1DATA = sample;
 

@@ -41,34 +41,34 @@ int main(void)
 
    *GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
 
-   /*uint16_t oldButtons = 0xffff;
-   uint16_t oldTimeValue = 0x0000;
+   /*uint16_t old_buttons = 0xffff;
+   uint16_t old_time_value = 0x0000;
 	while (1)
    {
-      
+
       // Reset lights
       *GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
 
       *GPIO_PA_DOUT = *GPIO_PA_DOUT & (*GPIO_PC_DIN << 8);
-      
+
       // Get timer value
-      uint16_t timeValue = *TIMER1_CNT;
-      if (timeValue < oldTimeValue)
+      uint16_t time_value = *TIMER1_CNT;
+      if (time_value < old_time_value)
       {
          playEffects();
       }
 
-      oldTimeValue = timeValue;
+      old_time_value = time_value;
 
       // Get currently pressed buttons
-      uint16_t buttons = *GPIO_PC_DIN;      
-      uint16_t changedButtons = oldButtons ^ buttons;
-      uint16_t buttonsPressed = changedButtons & (~ buttons);
-      resetCounters(buttonsPressed, ~ buttons);
+      uint16_t buttons = *GPIO_PC_DIN;
+      uint16_t changed_buttons = old_buttons ^ buttons;
+      uint16_t buttons_pressed = changed_buttons & (~ buttons);
+      resetCounters(buttons_pressed, ~ buttons);
 
-      oldButtons = buttons;
+      old_buttons = buttons;
    }*/
-   
+
    // Kan vi gå lavere enn EM1?
    *EMU_CTRL = 0;
    *SCR = 2;

@@ -11,7 +11,7 @@
 #define SAMPLES_PER_NOTE 7250
 #define MELODY_NOTES 23
 
-uint32_t phaseLeft = 0;
+uint32_t phase_left = 0;
 //uint32_t phaseRight = 0;
 
 // Initialize counters to values that prevents them from playing at startup

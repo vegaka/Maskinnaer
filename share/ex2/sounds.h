@@ -24,12 +24,12 @@
 #define F5 698
 #define G5 784
 
-int startUpSoundLeft[23] = {
+int start_up_sound_left[23] = {
   G4, G4, C5, C5, C5, D5, E5, E5, D5, D5, C5, C5, B4, B4, A4, A4, A4, B4, C5, C5,
   G4, G4, G4
 };
 
-int startUpSoundRight[23] = {
+int start_up_sound_right[23] = {
   G3, G3, C4, C4, C4, C4, G3, G3, C4, C4, G3, G3, E3, E3, F3, F3, F3, E3, D3, D3,
   E3, E3, E3
 };

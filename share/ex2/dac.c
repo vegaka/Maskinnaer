@@ -17,8 +17,8 @@ void setupDAC()
 	 */
 
 	 //Enable the DAC clock by setting bit 17 in CMU_HFPERCLKEN0
-	 uint32_t enableFlag = 1 << 17;
-	 *CMU_HFPERCLKEN0 = *CMU_HFPERCLKEN0 | enableFlag;
+	 uint32_t enable_flag = 1 << 17;
+	 *CMU_HFPERCLKEN0 = *CMU_HFPERCLKEN0 | enable_flag;
 
 	 //Prescale DAC clock by writing 0x50010 to DAC0_CTRL
 	 *DAC0_CTRL = 0x50010;
