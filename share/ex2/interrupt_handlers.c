@@ -43,5 +43,5 @@ void handle_GPIO_interrupt()
 	resetCounters(interrupt_flags, current_buttons);
 
 	// Cleanup
-	*GPIO_IFC = *GPIO_IF;	
+	*GPIO_IFC = *GPIO_IF;
 }

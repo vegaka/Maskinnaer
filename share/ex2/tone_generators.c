@@ -9,7 +9,6 @@
 #define PI 3.14159265
 
 uint32_t sineWave(int freq, int time, int amp, int sampling_frequency, uint32_t *phase) {
-    //uint32_t temp = amp/2 * sin(2 * PI * time/sampling_frequency * freq) + 2048;
     int temp = (int)floor(freq * 2048 / sampling_frequency);
     *phase = (*phase + temp) % 1024;
     return sine_list[*phase] / 2 + 1024;

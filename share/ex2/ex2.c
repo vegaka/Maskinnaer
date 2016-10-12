@@ -70,8 +70,11 @@ int main(void)
    }*/
 
    // Kan vi gå lavere enn EM1?
+	 //Enter Energy Mode 1 (EM1) by writing 0x0xx0 to EMU_CTRL
    *EMU_CTRL = 0;
+	 //Enable sleep by writing 0 to bit 2 in SystemControlRegister
    *SCR = 2;
+	 //Assmebly instruction for 'wait for interrupt'
    __asm__("wfi");
 
 	return 0;
