@@ -21,6 +21,9 @@ void setupTimer(uint32_t period);
 void setupDAC();
 void setupNVIC();
 
+void playEffects();
+void resetCounters(uint16_t flags, uint16_t buttons);
+
 /* Your code will start executing here */
 int main(void)
 {
@@ -35,8 +38,40 @@ int main(void)
 	/* TODO for higher energy efficiency, sleep while waiting for interrupts
 	   instead of infinite loop for busy-waiting
 	 */
-	//while (1) ;
-   __asm__("wfi");
+
+   *GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
+
+   uint16_t oldButtons = 0xffff;
+   uint16_t oldTimeValue = 0x0000;
+	while (1)
+   {
+      
+      // Reset lights
+      *GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
+
+      *GPIO_PA_DOUT = *GPIO_PA_DOUT & (*GPIO_PC_DIN << 8);
+      
+      // Get timer value
+      uint16_t timeValue = *TIMER1_CNT;
+      if (timeValue < oldTimeValue)
+      {
+         playEffects();
+      }
+
+      oldTimeValue = timeValue;
+
+      // Get currently pressed buttons
+      uint16_t buttons = *GPIO_PC_DIN;      
+      uint16_t changedButtons = oldButtons ^ buttons;
+      uint16_t buttonsPressed = changedButtons & (~ buttons);
+      resetCounters(buttonsPressed, ~ buttons);
+
+      oldButtons = buttons;
+   }
+   
+   // Ville ikke funke. Kan vi i det hele tatt sove? Spør studass på fredag
+   /**SCR = 6;
+   __asm__("wfi");*/
 
 	return 0;
 }

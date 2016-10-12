@@ -1,11 +1,12 @@
 #include <math.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "interrupt_handlers.h"
 #include "efm32gg.h"
 #include "tone_generators.h"
-#include "sounds.h"
+
+void playEffects();
+void resetCounters(uint16_t flags, uint16_t buttons);
 
 /* TIMER1 interrupt handler */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
@@ -15,35 +16,7 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	   remember to clear the pending interrupt by writing 1 to TIMER1_IFC
 	 */
 
-	// Melody
-	if (melody_counter < MELODY_NOTES * SAMPLES_PER_NOTE) 
-	{
-		int noteArrayIndex = floor(melody_counter / SAMPLES_PER_NOTE);
-
-		uint32_t sample = sineWave(startUpSoundLeft[noteArrayIndex], melody_counter, 4096 / 2, 25000, &phaseLeft);
-		*DAC0_CH0DATA = sample;
-		*DAC0_CH1DATA = sample;
-
-		melody_counter++;
-	} else if (hit_counter < 1024)
-	{
-		effect_sample = hitEffect(hit_counter);
-		*DAC0_CH0DATA = effect_sample;
-		*DAC0_CH1DATA = effect_sample;
-		hit_counter++;
-	} else if (metal_counter < 1024)
-	{
-		effect_sample = metal_effect(metal_counter);
-		*DAC0_CH0DATA = effect_sample;
-		*DAC0_CH1DATA = effect_sample;
-		metal_counter++;
-	} else if (win_counter < 1024 * 10)
-	{
-		effect_sample = win_effect(win_counter);
-		*DAC0_CH0DATA = effect_sample;
-		*DAC0_CH1DATA = effect_sample;
-		win_counter++;
-	}
+	playEffects();
 
 	/* Clear pending interrupt */
 	*TIMER1_IFC = 1;
@@ -67,30 +40,7 @@ void handle_GPIO_interrupt()
 	uint16_t interrupt_flags = *GPIO_IF;
 	uint16_t current_buttons = ~ *GPIO_PC_DIN;
 
-	int play_hit_effect = (interrupt_flags & 1) & current_buttons;
-	int play_metal_effect = (interrupt_flags & (1 << 1)) & current_buttons;
-	int play_win_effect = (interrupt_flags & (1 << 2)) & current_buttons;
-	play_melody = (interrupt_flags & (1 << 3)) & current_buttons;
-
-	if (play_hit_effect)
-	{
-		hit_counter = 0;
-	}
-
-	if (play_metal_effect)
-	{
-		metal_counter = 0;
-	}
-
-	if (play_win_effect)
-	{
-		win_counter = 0;
-	}
-
-	if (play_melody)
-	{
-		melody_counter = 0;
-	}
+	resetCounters(interrupt_flags, current_buttons);
 
 	// Cleanup
 	*GPIO_IFC = *GPIO_IF;	
