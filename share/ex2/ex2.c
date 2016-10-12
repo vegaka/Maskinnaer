@@ -41,7 +41,7 @@ int main(void)
 
    *GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
 
-   uint16_t oldButtons = 0xffff;
+   /*uint16_t oldButtons = 0xffff;
    uint16_t oldTimeValue = 0x0000;
 	while (1)
    {
@@ -67,11 +67,12 @@ int main(void)
       resetCounters(buttonsPressed, ~ buttons);
 
       oldButtons = buttons;
-   }
+   }*/
    
-   // Ville ikke funke. Kan vi i det hele tatt sove? Spør studass på fredag
-   /**SCR = 6;
-   __asm__("wfi");*/
+   // Kan vi gå lavere enn EM1?
+   *EMU_CTRL = 0;
+   *SCR = 2;
+   __asm__("wfi");
 
 	return 0;
 }
