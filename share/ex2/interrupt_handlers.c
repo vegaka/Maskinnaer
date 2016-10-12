@@ -15,19 +15,17 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	   remember to clear the pending interrupt by writing 1 to TIMER1_IFC
 	 */
 
-	//Sound
-	/*uint32_t samplesPerNote = 7250;
-	int noteArrayIndex = floor(counter / samplesPerNote);
-	int index = noteArrayIndex;
-
-	if (noteArrayIndex < 23)
+	// Melody
+	if (melody_counter < MELODY_NOTES * SAMPLES_PER_NOTE) 
 	{
-		uint32_t sample = sineWave(startUpSoundLeft[index], counter, 4096 / 2, 25000, &phaseLeft);
+		int noteArrayIndex = floor(melody_counter / SAMPLES_PER_NOTE);
+
+		uint32_t sample = sineWave(startUpSoundLeft[noteArrayIndex], melody_counter, 4096 / 2, 25000, &phaseLeft);
 		*DAC0_CH0DATA = sample;
 		*DAC0_CH1DATA = sample;
-	}*/
 
-	if (hit_counter < 1024)
+		melody_counter++;
+	} else if (hit_counter < 1024)
 	{
 		effect_sample = hitEffect(hit_counter);
 		*DAC0_CH0DATA = effect_sample;
@@ -46,12 +44,6 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 		*DAC0_CH1DATA = effect_sample;
 		win_counter++;
 	}
-
-
-
-	counter++;
-
-	*GPIO_PA_DOUT = ~(*GPIO_PA_DOUT);
 
 	/* Clear pending interrupt */
 	*TIMER1_IFC = 1;
@@ -78,6 +70,7 @@ void handle_GPIO_interrupt()
 	int play_hit_effect = (interrupt_flags & 1) & current_buttons;
 	int play_metal_effect = (interrupt_flags & (1 << 1)) & current_buttons;
 	int play_win_effect = (interrupt_flags & (1 << 2)) & current_buttons;
+	play_melody = (interrupt_flags & (1 << 3)) & current_buttons;
 
 	if (play_hit_effect)
 	{
@@ -92,6 +85,11 @@ void handle_GPIO_interrupt()
 	if (play_win_effect)
 	{
 		win_counter = 0;
+	}
+
+	if (play_melody)
+	{
+		melody_counter = 0;
 	}
 
 	// Cleanup
