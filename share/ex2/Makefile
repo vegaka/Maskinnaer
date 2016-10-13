@@ -11,6 +11,11 @@ LDFLAGS=-mcpu=cortex-m3 -mthumb -g -lgcc -lc -lcs3 -lcs3unhosted -lefm32gg -Llib
 ASFLAGS=-mcpu=cortex-m3 -mthumb -g
 LINKERSCRIPT=lib/efm32gg.ld
 
+all : ex2.bin
+
+baseline : CFLAGS += -DBASELINE
+baseline : ex2.bin
+
 ex2.bin : ex2.elf
 	${OBJCOPY} -O binary $< $@
 
