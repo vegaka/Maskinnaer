@@ -5,8 +5,8 @@
 #include "efm32gg.h"
 #include "tone_generators.h"
 
-void playEffects();
-void resetCounters(uint16_t flags, uint16_t buttons);
+void play_effects();
+void reset_counters(uint16_t flags, uint16_t buttons);
 
 /* TIMER1 interrupt handler */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
@@ -16,7 +16,7 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	   remember to clear the pending interrupt by writing 1 to TIMER1_IFC
 	 */
 
-	playEffects();
+	play_effects();
 
 	/* Clear pending interrupt */
 	*TIMER1_IFC = 1;
@@ -25,22 +25,22 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 /* GPIO even pin interrupt handler */
 void __attribute__ ((interrupt)) GPIO_EVEN_IRQHandler()
 {
-	handle_GPIO_interrupt();
+	handle_gpio_interrupt();
 }
 
 /* GPIO odd pin interrupt handler */
 void __attribute__ ((interrupt)) GPIO_ODD_IRQHandler()
 {
-	handle_GPIO_interrupt();
+	handle_gpio_interrupt();
 }
 
-void handle_GPIO_interrupt()
+void handle_gpio_interrupt()
 {
 	/* TODO handle button pressed event, remember to clear pending interrupt */
 	uint16_t interrupt_flags = *GPIO_IF;
-	uint16_t current_buttons = ~ *GPIO_PC_DIN;
+	uint16_t current_buttons = ~*GPIO_PC_DIN;
 
-	resetCounters(interrupt_flags, current_buttons);
+	reset_counters(interrupt_flags, current_buttons);
 
 	// Cleanup
 	*GPIO_IFC = *GPIO_IF;

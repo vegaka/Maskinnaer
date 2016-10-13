@@ -16,71 +16,70 @@
 #define   SAMPLE_PERIOD   560
 
 /* Declaration of peripheral setup functions */
-void setupGPIO();
-void setupTimer(uint32_t period);
-void setupDAC();
-void setupNVIC();
+void setup_gpio();
+void setup_timer(uint32_t period);
+void setup_dac();
+void setup_nvic();
 
-void playEffects();
-void resetCounters(uint16_t flags, uint16_t buttons);
+void play_effects();
+void reset_counters(uint16_t flags, uint16_t buttons);
 
 /* Your code will start executing here */
 int main(void)
 {
 	/* Call the peripheral setup functions */
-	setupGPIO();
-	setupDAC();
-	setupTimer(SAMPLE_PERIOD);
+	setup_gpio();
+	setup_dac();
+	setup_timer(SAMPLE_PERIOD);
 
+	/* Turn off the lights */
+	*GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
+
+#ifdef BASELINE
+
+	uint16_t old_buttons = 0xffff;
+	uint16_t old_time_value = 0x0000;
+	while (1) {
+
+		// Reset lights
+		*GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
+
+		*GPIO_PA_DOUT = *GPIO_PA_DOUT & (*GPIO_PC_DIN << 8);
+
+		// Get timer value
+		uint16_t time_value = *TIMER1_CNT;
+		if (time_value < old_time_value)
+			play_effects();
+
+		old_time_value = time_value;
+
+		// Get currently pressed buttons
+		uint16_t buttons = *GPIO_PC_DIN;
+		uint16_t changed_buttons = old_buttons ^ buttons;
+		uint16_t buttons_pressed = changed_buttons & (~buttons);
+		reset_counters(buttons_pressed, ~buttons);
+
+		old_buttons = buttons;
+	}
+#else
+	
 	/* Enable interrupt handling */
-	setupNVIC();
+	setup_nvic();
 
-	/* TODO for higher energy efficiency, sleep while waiting for interrupts
-	   instead of infinite loop for busy-waiting
-	 */
+	// Kan vi gå lavere enn EM1?
+	//Enter Energy Mode 1 (EM1) by writing 0b0xx0 to EMU_CTRL
+	*EMU_CTRL = 0;
+	//Enable sleep by writing 0 to bit 2 in SystemControlRegister
+	*SCR = 2;
+	//Assmebly instruction for 'wait for interrupt'
+	__asm__("wfi");
 
-   *GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
-
-   /*uint16_t old_buttons = 0xffff;
-   uint16_t old_time_value = 0x0000;
-	while (1)
-   {
-
-      // Reset lights
-      *GPIO_PA_DOUT = *GPIO_PA_DOUT | 0xff00;
-
-      *GPIO_PA_DOUT = *GPIO_PA_DOUT & (*GPIO_PC_DIN << 8);
-
-      // Get timer value
-      uint16_t time_value = *TIMER1_CNT;
-      if (time_value < old_time_value)
-      {
-         playEffects();
-      }
-
-      old_time_value = time_value;
-
-      // Get currently pressed buttons
-      uint16_t buttons = *GPIO_PC_DIN;
-      uint16_t changed_buttons = old_buttons ^ buttons;
-      uint16_t buttons_pressed = changed_buttons & (~ buttons);
-      resetCounters(buttons_pressed, ~ buttons);
-
-      old_buttons = buttons;
-   }*/
-
-   // Kan vi gå lavere enn EM1?
-	 //Enter Energy Mode 1 (EM1) by writing 0x0xx0 to EMU_CTRL
-   *EMU_CTRL = 0;
-	 //Enable sleep by writing 0 to bit 2 in SystemControlRegister
-   *SCR = 2;
-	 //Assmebly instruction for 'wait for interrupt'
-   __asm__("wfi");
+#endif
 
 	return 0;
 }
 
-void setupNVIC()
+void setup_nvic()
 {
 	/* TODO use the NVIC ISERx registers to enable handling of interrupt(s)
 	   remember two things are necessary for interrupt handling:
@@ -89,66 +88,10 @@ void setupNVIC()
 	   You will need TIMER1, GPIO odd and GPIO even interrupt handling for this
 	   assignment.
 	 */
-   *GPIO_EXTIPSELL = 0x22222222;
-   *GPIO_EXTIRISE = 0xff;
-   *GPIO_EXTIFALL = 0xff;
-   *GPIO_IEN = 0xff;
-   *ISER0 = 0b1100000000010;
+	*GPIO_EXTIPSELL = 0x22222222;
+	*GPIO_EXTIRISE = 0xff;
+	*GPIO_EXTIFALL = 0xff;
+	*GPIO_IEN = 0xff;
+	*ISER0 = 0b1100000000010;
 
 }
-
-/* if other interrupt handlers are needed, use the following names:
-   NMI_Handler
-   HardFault_Handler
-   MemManage_Handler
-   BusFault_Handler
-   UsageFault_Handler
-   Reserved7_Handler
-   Reserved8_Handler
-   Reserved9_Handler
-   Reserved10_Handler
-   SVC_Handler
-   DebugMon_Handler
-   Reserved13_Handler
-   PendSV_Handler
-   SysTick_Handler
-   DMA_IRQHandler
-   GPIO_EVEN_IRQHandler
-   TIMER0_IRQHandler
-   USART0_RX_IRQHandler
-   USART0_TX_IRQHandler
-   USB_IRQHandler
-   ACMP0_IRQHandler
-   ADC0_IRQHandler
-   DAC0_IRQHandler
-   I2C0_IRQHandler
-   I2C1_IRQHandler
-   GPIO_ODD_IRQHandler
-   TIMER1_IRQHandler
-   TIMER2_IRQHandler
-   TIMER3_IRQHandler
-   USART1_RX_IRQHandler
-   USART1_TX_IRQHandler
-   LESENSE_IRQHandler
-   USART2_RX_IRQHandler
-   USART2_TX_IRQHandler
-   UART0_RX_IRQHandler
-   UART0_TX_IRQHandler
-   UART1_RX_IRQHandler
-   UART1_TX_IRQHandler
-   LEUART0_IRQHandler
-   LEUART1_IRQHandler
-   LETIMER0_IRQHandler
-   PCNT0_IRQHandler
-   PCNT1_IRQHandler
-   PCNT2_IRQHandler
-   RTC_IRQHandler
-   BURTC_IRQHandler
-   CMU_IRQHandler
-   VCMP_IRQHandler
-   LCD_IRQHandler
-   MSC_IRQHandler
-   AES_IRQHandler
-   EBI_IRQHandler
-   EMU_IRQHandler
-*/

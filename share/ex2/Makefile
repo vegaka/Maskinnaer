@@ -13,6 +13,7 @@ LINKERSCRIPT=lib/efm32gg.ld
 
 all : ex2.bin
 
+# Baseline target
 baseline : CFLAGS += -DBASELINE
 baseline : ex2.bin
 
