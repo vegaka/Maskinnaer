@@ -1,7 +1,7 @@
 #ifndef SINETABLE_H
 #define SINETABLE_H
 
-//Generated sine wave table
+/* Generated sine wave table */
 uint32_t sine_list[1024] = { 2048, 2061, 2073, 2086, 2098, 2111, 2123, 2136,
 	2149, 2161, 2174, 2186, 2199, 2211, 2224, 2236,
 	2249, 2261, 2274, 2286, 2299, 2311, 2324, 2336,

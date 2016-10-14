@@ -13,7 +13,7 @@
 
 uint32_t phase = 0;
 
-// Initialize counters to values that prevents them from playing at startup
+/* Initialize counters to values that prevents them from playing at startup */
 uint32_t hit_counter = 1024;
 uint32_t metal_counter = 1024;
 uint32_t win_counter = 1024 * 10;

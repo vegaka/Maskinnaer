@@ -11,11 +11,7 @@ void reset_counters(uint16_t flags, uint16_t buttons);
 /* TIMER1 interrupt handler */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 {
-	/*
-	   TODO feed new samples to the DAC
-	   remember to clear the pending interrupt by writing 1 to TIMER1_IFC
-	 */
-
+	/* Play the currect effect */
 	play_effects();
 
 	/* Clear pending interrupt */
@@ -34,14 +30,20 @@ void __attribute__ ((interrupt)) GPIO_ODD_IRQHandler()
 	handle_gpio_interrupt();
 }
 
+/*
+ *  Handler for all GPIO interrupts.
+ *
+ *  Arguments: None
+ *  Returns: Void
+ */
 void handle_gpio_interrupt()
 {
-	/* TODO handle button pressed event, remember to clear pending interrupt */
 	uint16_t interrupt_flags = *GPIO_IF;
 	uint16_t current_buttons = ~*GPIO_PC_DIN;
 
+	/* Reset counters based on buttons pressed and the interrupt */
 	reset_counters(interrupt_flags, current_buttons);
 
-	// Cleanup
+	/* Cleanup */
 	*GPIO_IFC = *GPIO_IF;
 }
