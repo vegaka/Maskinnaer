@@ -9,7 +9,7 @@
 
 int register_irq(int irq_num);
 
-irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
+static irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
 	printk("irq: %d", irq);
 
