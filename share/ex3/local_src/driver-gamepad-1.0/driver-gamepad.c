@@ -4,6 +4,9 @@
 #include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
+#include <asm/io.h>
+
+#include "efm32gg.h"
 
 #define DEVICE_NAME "TDT4258 gamepad driver"
 
@@ -12,6 +15,9 @@ int register_irq(int irq_num);
 static irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
 	printk("irq: %d", irq);
+
+	/* Clear interrupt */
+	iowrite32(*GPIO_IF, GPIO_IFC);
 
 	return IRQ_HANDLED;
 }
@@ -33,6 +39,18 @@ static int gamepad_probe(struct platform_device *dev)
 	irq_odd_res = register_irq(irq_gpio_odd);
 
 	printk("odd: %d\n", irq_odd_res);
+
+	/* Set pins 0-7 of port C to input */ 
+	iowrite32(0x33333333, GPIO_PC_MODEL);
+
+	/* Enable internal pull-up */
+	iowrite32(0xff, GPIO_PC_DOUT);
+
+	/* Enable GPIO interrupts on button down and up */
+	iowrite32(0x22222222, GPIO_EXTIPSELL);
+	iowrite32(0xff, GPIO_EXTIRISE);
+	iowrite32(0xff, GPIO_EXTIFALL);
+	iowrite32(0xff, GPIO_IEN);
 
 	return 0;
 }
