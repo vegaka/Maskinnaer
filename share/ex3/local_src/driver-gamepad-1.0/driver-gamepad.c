@@ -31,8 +31,7 @@ irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 
 void signal_game()
 {
-	int ret;
-	ret = send_sig_info(SIGUSR1, );
+	
 }
 
 static int gamepad_open(struct inode *inode, struct file *file) {
