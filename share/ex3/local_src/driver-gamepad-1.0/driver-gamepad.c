@@ -2,43 +2,106 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
-#include <linux/platform_device.h>
 #include <linux/interrupt.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/device.h>
+#include <linux/signal.h>
 #include <asm/io.h>
+#include <asm/siginfo.h>
 
 #include "efm32gg.h"
 
-#define DEVICE_NAME "TDT4258 gamepad driver"
+#define DEVICE_NAME "TDT4258"
 
-int register_irq(int irq_num);
+#define IO_REGION_SIZE 0x11c /* GPIO_IFC - GPIO_PA_BASE */
 
-static irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
+irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
-	printk("irq: %d", irq);
+
+	printk("irq: %d\n", irq);
 
 	/* Clear interrupt */
 	iowrite32(*GPIO_IF, GPIO_IFC);
 
+	signal_game();
+
 	return IRQ_HANDLED;
 }
 
-static int gamepad_probe(struct platform_device *dev) 
+void signal_game()
 {
-	int irq_gpio_even;
-	int irq_gpio_odd;
-	int irq_even_res;
-	int irq_odd_res;
+	
+}
 
-	irq_gpio_even = platform_get_irq(dev, 0);
-	irq_gpio_odd = platform_get_irq(dev, 1);
+static int gamepad_open(struct inode *inode, struct file *file) {
+    printk(KERN_INFO "open sample char device\n");
+    return 0;
+}
 
-	irq_even_res = register_irq(irq_gpio_even);
+static int gamepad_release(struct inode *inode, struct file *file) {
+    printk(KERN_INFO "release sample char device\n");
+    return 0;
+}
 
-	printk("even: %d\n", irq_even_res);
+static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, loff_t *offset) {
+    return size;
+}
 
-	irq_odd_res = register_irq(irq_gpio_odd);
+static ssize_t gamepad_write(struct file *file, const char __user *data, size_t size, loff_t *offset) {
+    return size;
+}
 
-	printk("odd: %d\n", irq_odd_res);
+static struct file_operations driver_fops = {
+	.owner = THIS_MODULE,
+	.read = gamepad_read,
+	.write = gamepad_write,
+	.open = gamepad_open,
+	.release = gamepad_release
+};
+
+static dev_t driver_major;
+static struct class *driver_class;
+static struct cdev *driver_cdev;
+
+/*
+ * template_init - function to insert this module into kernel space
+ *
+ * This is the first of two exported functions to handle inserting this
+ * code into a running kernel
+ *
+ * Returns 0 if successfull, otherwise -1
+ */
+
+static int __init gamepad_module_init(void)
+{
+
+	int result; // Used to check result from functions
+
+	struct resource *io_region;
+	int irq_request_res;
+
+	io_region = request_mem_region(GPIO_PA_BASE, IO_REGION_SIZE, DEVICE_NAME);
+
+	if (io_region == NULL)
+	{
+		printk("Unable to allocate IO memory\n");
+		return -1;
+	}
+
+	ioremap_nocache(io_region->start, IO_REGION_SIZE);
+
+	/* Interrupts */
+
+	irq_request_res = request_irq(17, (irq_handler_t) gpio_handler, 0, DEVICE_NAME, 0);
+	if (irq_request_res < 0) {
+		printk(KERN_ALERT "%s: request_irq failed with %d\n", __func__, irq_request_res);
+	}
+
+	irq_request_res = request_irq(18, (irq_handler_t) gpio_handler, 0, DEVICE_NAME, 0);
+	if (irq_request_res < 0) {
+		printk(KERN_ALERT "%s: request_irq failed with %d\n", __func__, irq_request_res);
+	}
 
 	/* Set pins 0-7 of port C to input */ 
 	iowrite32(0x33333333, GPIO_PC_MODEL);
@@ -52,55 +115,28 @@ static int gamepad_probe(struct platform_device *dev)
 	iowrite32(0xff, GPIO_EXTIFALL);
 	iowrite32(0xff, GPIO_IEN);
 
-	return 0;
-}
-
-static int gamepad_remove(struct platform_device *dev) 
-{
-	return 0;
-}
-
-static const struct of_device_id device_table[] = {
-	{ .compatible = "tdt4258", },
-	{},
-};
-
-MODULE_DEVICE_TABLE(of, device_table);
-
-static struct platform_driver gamepad_driver = {
-	.probe = gamepad_probe,
-	.remove = gamepad_remove,
-	.driver = {
-		.name = DEVICE_NAME,
-		.owner = THIS_MODULE,
-		.of_match_table = device_table,
-	},
-};
-
-int register_irq(int irq_num)
-{
-	int result = request_irq(irq_num, (irq_handler_t) gpio_handler, IRQF_TRIGGER_MASK, DEVICE_NAME, &gamepad_driver);
+	result = alloc_chrdev_region(&driver_major, 0, 1, DEVICE_NAME);
 	if (result < 0) {
-		printk(KERN_ALERT "%s: request_irq failed with %d\n", __func__, result);
+		printk(KERN_ALERT "alloc_chrdev_region failed.\n");
 	}
 
-	return result;
-}
+	driver_cdev = cdev_alloc();
+	cdev_init(driver_cdev, &driver_fops);	
+	result = cdev_add(driver_cdev, driver_major, 1);
+	if (result < 0) {
+		printk(KERN_ALERT "Failed to add cdev\n");
+	}
 
-/*
- * template_init - function to insert this module into kernel space
- *
- * This is the first of two exported functions to handle inserting this
- * code into a running kernel
- *
- * Returns 0 if successfull, otherwise -1
- */
+	driver_class = class_create(THIS_MODULE, DEVICE_NAME);
+	if (!driver_class) {
+		printk(KERN_ALERT "Failed to create class\n");
+	}
 
-static int __init gamepad_module_init(void)
-{
-	/*printk("Hello World, here is your module speaking\n");*/
+	if (!device_create(driver_class, NULL, driver_major, NULL, DEVICE_NAME)) {
+		printk(KERN_ALERT "Failed to create device\n");
+	}
 
-	return platform_driver_register(&gamepad_driver);
+	return 0;
 }
 
 /*
@@ -112,7 +148,12 @@ static int __init gamepad_module_init(void)
 
 static void __exit gamepad_module_cleanup(void)
 {
-	 printk("Short life for a small module...\n");
+	device_destroy(driver_class, driver_major);
+	class_destroy(driver_class);
+	cdev_del(driver_cdev);
+	release_mem_region(GPIO_PA_BASE, IO_REGION_SIZE);
+	unregister_chrdev_region(driver_major, 1);
+	printk(KERN_DEBUG "Exiting gamepad kernel module\n");
 }
 
 module_init(gamepad_module_init);
