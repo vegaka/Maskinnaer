@@ -16,10 +16,17 @@
 
 #define IO_REGION_SIZE 0x11c /* GPIO_IFC - GPIO_PA_BASE */
 
+static struct fasync_struct *fasync;
+
+static void signal_game()
+{
+	kill_fasync(&fasync, SIGIO, POLL_IN);
+}
+
 irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
 
-	printk("irq: %d\n", irq);
+	/* printk("irq: %d\n", irq); */
 
 	/* Clear interrupt */
 	iowrite32(*GPIO_IF, GPIO_IFC);
@@ -29,27 +36,31 @@ irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 	return IRQ_HANDLED;
 }
 
-void signal_game()
+static int gamepad_open(struct inode *inode, struct file *file)
 {
-	
-}
-
-static int gamepad_open(struct inode *inode, struct file *file) {
     printk(KERN_INFO "open sample char device\n");
     return 0;
 }
 
-static int gamepad_release(struct inode *inode, struct file *file) {
+static int gamepad_release(struct inode *inode, struct file *file)
+{
     printk(KERN_INFO "release sample char device\n");
     return 0;
 }
 
-static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, loff_t *offset) {
+static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, loff_t *offset)
+{
     return size;
 }
 
-static ssize_t gamepad_write(struct file *file, const char __user *data, size_t size, loff_t *offset) {
+static ssize_t gamepad_write(struct file *file, const char __user *data, size_t size, loff_t *offset)
+{
     return size;
+}
+
+static int gamepad_async(int fd, struct file *filp, int onflag)
+{
+	return fasync_helper(fd, filp, onflag, &fasync);
 }
 
 static struct file_operations driver_fops = {
@@ -57,7 +68,8 @@ static struct file_operations driver_fops = {
 	.read = gamepad_read,
 	.write = gamepad_write,
 	.open = gamepad_open,
-	.release = gamepad_release
+	.release = gamepad_release,
+	.fasync = gamepad_async,
 };
 
 static dev_t driver_major;
