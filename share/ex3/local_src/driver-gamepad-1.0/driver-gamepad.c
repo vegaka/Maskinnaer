@@ -9,6 +9,7 @@
 #include <linux/signal.h>
 #include <asm/io.h>
 #include <asm/siginfo.h>
+#include <asm/uaccess.h>
 
 #include "efm32gg.h"
 
@@ -18,7 +19,7 @@
 
 static struct fasync_struct *fasync;
 
-static void signal_game()
+static void signal_game(void)
 {
 	kill_fasync(&fasync, SIGIO, POLL_IN);
 }
@@ -50,12 +51,19 @@ static int gamepad_release(struct inode *inode, struct file *file)
 
 static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, loff_t *offset)
 {
-    return size;
+    	int res;
+	short buttons;
+
+	buttons = *GPIO_PC_DIN;
+	printk("Buttons: %d\n", buttons);
+	res = copy_to_user(data, &buttons, sizeof(short));
+    	
+    	return size - res;
 }
 
 static ssize_t gamepad_write(struct file *file, const char __user *data, size_t size, loff_t *offset)
 {
-    return size;
+	return size;
 }
 
 static int gamepad_async(int fd, struct file *filp, int onflag)
@@ -69,7 +77,7 @@ static struct file_operations driver_fops = {
 	.write = gamepad_write,
 	.open = gamepad_open,
 	.release = gamepad_release,
-	.fasync = gamepad_async,
+	.fasync = gamepad_async
 };
 
 static dev_t driver_major;
