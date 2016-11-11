@@ -127,10 +127,57 @@ void update_player(struct gameobject *player, int buttons)
 		player->dy = 0;
 	}
 
-	// Check bounds
-
 	player->y += player->dy;
 
+	if (player->y < 0) {
+		player->y = 0;
+	} else if (player->y + player->h > HEIGHT) {
+		player->y = HEIGHT - player->h;
+	}
+}
+
+int is_colliding(struct gameobject *obj1, struct gameobject *obj2)
+{
+	return obj1->x < obj2->x + obj2->w &&
+		obj1->x + obj1->w > obj2->x &&
+		obj1->y < obj2->y + obj2->h &&
+   		obj1->h + obj1->y > obj2->y;
+}
+
+void update_ball(struct gameobject *ball, struct gameobject *player1, struct gameobject *player2)
+{
+	if (is_colliding(ball, player1) || is_colliding(ball, player2)) {
+		if (ball->dx > 0) {
+			ball->dx += 1;
+		} else {
+			ball->dx -= 1;
+		}
+
+		if (abs(ball->dx) > 9) {
+			ball->dx = 9;
+		}
+
+    		ball->dx *= -1;
+	}
+
+	ball->y += ball->dy;
+	ball->x += ball->dx;
+
+	if (ball->y < 0) {
+		ball->y = 0;
+		ball->dy *= -1;
+	} else if (ball->y + ball->h > HEIGHT) {
+		ball->y = HEIGHT - ball->h;
+		ball->dy *= -1;
+	}
+
+	if (ball->x < 0) {
+		ball->x = 0;
+		ball->dx *= -1;
+	} else if (ball->x + ball->w > WIDTH) {
+		ball->x = WIDTH - ball->w;
+		ball->dx *= -1;
+	}
 }
 
 int main(int argc, char *argv[])
@@ -172,6 +219,7 @@ int main(int argc, char *argv[])
     	init_game(&player1, &player2, &ball);
 
     	ball.dx = 3;
+    	ball.dy = 4;
 
     	struct fb_copyarea rect;
 
@@ -181,13 +229,10 @@ int main(int argc, char *argv[])
 		clear_object(&player2);
 		clear_object(&ball);
 
-		ball.x += ball.dx;
-		if (ball.x + ball.w > WIDTH) {
-			ball.x = 0;
-		}
-
 		update_player(&player1, buttons);
 		update_player(&player2, buttons >> 4);
+
+		update_ball(&ball, &player1, &player2);
 
 		draw_gameobject(&player1);
     		draw_gameobject(&player2);
@@ -198,8 +243,6 @@ int main(int argc, char *argv[])
     		rect.width = WIDTH;
     		rect.height = HEIGHT;
     		ioctl(fb_desc, 0x4680, &rect);
-
-    		//usleep(30 * 1000);
 	}
 
 	munmap(fb_mmap, WIDTH * HEIGHT * 2);
