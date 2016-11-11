@@ -1,6 +1,6 @@
 .PHONY : driver
 driver :
-	-cp -r /media/sf_share/ex3/ /home/tdt4258/
+	-cp -r /media/sf_share/ex3/local_src /home/tdt4258/ex3/
 	-ptxdist clean driver-gamepad
 	-ptxdist compile driver-gamepad
 
@@ -14,7 +14,7 @@ upload-driver :
 
 .PHONY : game
 game :
-	-cp -r /media/sf_share/ex3/ /home/tdt4258/
+	-cp -r /media/sf_share/ex3/local_src /home/tdt4258/ex3/
 	-ptxdist clean game
 	-ptxdist compile game
 
