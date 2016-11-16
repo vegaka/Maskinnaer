@@ -31,7 +31,9 @@ unsigned short *fb_mmap;
 struct gameobject
 {
 	int x;
+	int oldx;
 	int y;
+	int oldy;
 	int w;
 	int h;
 	int dx;
@@ -73,6 +75,33 @@ void draw_gameobject(struct gameobject *object)
 	draw_rect(object->x, object->y, object->w, object->h, object->r, object->g, object->b);
 }
 
+void update_fb(struct gameobject *object)
+{
+	struct fb_copyarea old_area;
+	old_area.dx = object->oldx;
+	old_area.dy = object->oldy;
+	old_area.width = object->w;
+	old_area.height = object->h + 1;
+
+	if (old_area.dy + old_area.height > HEIGHT) {
+		old_area.height = HEIGHT - old_area.dy;
+	}
+
+	ioctl(fb_desc, 0x4680, &old_area);
+
+	struct fb_copyarea new_area;
+	new_area.dx = object->x;
+	new_area.dy = object->y;
+	new_area.width = object->w;
+	new_area.height = object->h;
+
+	if (new_area.dy + new_area.height > HEIGHT) {
+		new_area.height = HEIGHT - new_area.dy;
+	}
+
+	ioctl(fb_desc, 0x4680, &new_area);
+}
+
 void init_ball(struct gameobject *ball)
 {
 	ball->x = (WIDTH / 2) - (BALL_SIZE / 2);
@@ -104,6 +133,14 @@ void init_game(struct gameobject *player1, struct gameobject *player2, struct ga
 	init_paddle(player1, 20, 0xff, 0, 0);
 	init_paddle(player2, WIDTH - PADDLE_WIDTH - 20, 0, 0, 0xff);
 	init_ball(ball);
+
+	/* Draw initial gamestate */
+	struct fb_copyarea rect;
+	rect.dx = 0;
+    	rect.dy = 0;
+    	rect.width = WIDTH;
+    	rect.height = HEIGHT;
+	ioctl(fb_desc, 0x4680, &rect);
 }
 
 /* Buttons: Last four bits indicate which buttons are pressed for the specific player */
@@ -112,6 +149,9 @@ void update_player(struct gameobject *player, int buttons)
 {
 	int up;
 	int down;
+
+	player->oldx = player->x;
+	player->oldy = player->y;
 
 	up = (~buttons) & (1 << 1);
 	down = (~buttons) & (1 << 3);
@@ -135,6 +175,7 @@ void update_player(struct gameobject *player, int buttons)
 	}
 }
 
+/* AABB collition detection algorithm */
 int is_colliding(struct gameobject *obj1, struct gameobject *obj2)
 {
 	return obj1->x < obj2->x + obj2->w &&
@@ -145,9 +186,11 @@ int is_colliding(struct gameobject *obj1, struct gameobject *obj2)
 
 void update_ball(struct gameobject *ball, struct gameobject *player1, struct gameobject *player2)
 {
-
 	int is_col_p1 = is_colliding(ball, player1);
 	int is_col_p2 = is_colliding(ball, player2);
+
+	ball->oldx = ball->x;
+	ball->oldy = ball->y;
 
 	if (is_col_p1 || is_col_p2) {
 		if (ball->dx > 0) {
@@ -235,8 +278,6 @@ int main(int argc, char *argv[])
     	ball.dx = 3;
     	ball.dy = 4;
 
-    	struct fb_copyarea rect;
-
     	/* Game loop */
 	while(1) {
 		clear_object(&player1);
@@ -252,13 +293,13 @@ int main(int argc, char *argv[])
     		draw_gameobject(&player2);
     		draw_gameobject(&ball);
 
-    		rect.dx = 0;
-    		rect.dy = 0;
-    		rect.width = WIDTH;
-    		rect.height = HEIGHT;
-    		ioctl(fb_desc, 0x4680, &rect);
+    		/* Update framebuffer areas */
 
-    		//usleep(10 * 1000);
+    		update_fb(&player1);
+    		update_fb(&player2);
+    		update_fb(&ball);
+
+    		usleep(20 * 1000);
 	}
 
 	munmap(fb_mmap, WIDTH * HEIGHT * 2);
