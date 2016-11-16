@@ -20,8 +20,7 @@
 #define PADDLE_WIDTH 10
 
 #define BALL_SIZE 8
-
-enum Direction { STAY, UP, DOWN };
+#define MAX_BALL_SPEED 7
 
 int gamepad_desc;
 short buttons;
@@ -44,10 +43,10 @@ struct gameobject
 
 void driver_signal_handler(int signum)
 {
-	printf("Recieved signal: %d\n", signum);
+	/* printf("Recieved signal: %d\n", signum); */
 	int res = read(gamepad_desc, &buttons, sizeof(short));
 	printf("Read bytes: %d\n", res);
-	printf("Read buttons: %d\n", buttons);
+	/* printf("Read buttons: %d\n", buttons); */
 }
 
 void draw_rect(int x, int y, int w, int h, int r, int g, int b)
@@ -74,28 +73,8 @@ void draw_gameobject(struct gameobject *object)
 	draw_rect(object->x, object->y, object->w, object->h, object->r, object->g, object->b);
 }
 
-void init_game(struct gameobject *player1, struct gameobject *player2, struct gameobject *ball)
+void init_ball(struct gameobject *ball)
 {
-	player1->x = 20;
-	player1->y = (HEIGHT / 2) - (PADDLE_HEIGHT / 2);
-	player1->w = PADDLE_WIDTH;
-	player1->h = PADDLE_HEIGHT;
-	player1->dx = 0;
-	player1->dy = 0;
-	player1->r = 0xff;
-	player1->g = 0;
-	player1->b = 0;
-
-	player2->x = WIDTH - 20 - PADDLE_WIDTH;
-	player2->y = (HEIGHT / 2) - (PADDLE_HEIGHT / 2);
-	player2->w = PADDLE_WIDTH;
-	player2->h = PADDLE_HEIGHT;
-	player2->dx = 0;
-	player2->dy = 0;
-	player2->r = 0;
-	player2->g = 0;
-	player2->b = 0xff;
-
 	ball->x = (WIDTH / 2) - (BALL_SIZE / 2);
 	ball->y = (HEIGHT / 2) - (BALL_SIZE / 2);
 	ball->w = BALL_SIZE;
@@ -105,6 +84,26 @@ void init_game(struct gameobject *player1, struct gameobject *player2, struct ga
 	ball->r = 0xff;
 	ball->g = 0xff;
 	ball->b = 0xff;
+}
+
+void init_paddle(struct gameobject *paddle, int x, int r, int g, int b)
+{
+	paddle->x = x;
+	paddle->y = (HEIGHT / 2) - (PADDLE_HEIGHT / 2);
+	paddle->w = PADDLE_WIDTH;
+	paddle->h = PADDLE_HEIGHT;
+	paddle->dx = 0;
+	paddle->dy = 0;
+	paddle->r = r;
+	paddle->g = g;
+	paddle->b = b;
+}
+
+void init_game(struct gameobject *player1, struct gameobject *player2, struct gameobject *ball)
+{
+	init_paddle(player1, 20, 0xff, 0, 0);
+	init_paddle(player2, WIDTH - PADDLE_WIDTH - 20, 0, 0, 0xff);
+	init_ball(ball);
 }
 
 /* Buttons: Last four bits indicate which buttons are pressed for the specific player */
@@ -146,22 +145,37 @@ int is_colliding(struct gameobject *obj1, struct gameobject *obj2)
 
 void update_ball(struct gameobject *ball, struct gameobject *player1, struct gameobject *player2)
 {
-	if (is_colliding(ball, player1) || is_colliding(ball, player2)) {
+
+	int is_col_p1 = is_colliding(ball, player1);
+	int is_col_p2 = is_colliding(ball, player2);
+
+	if (is_col_p1 || is_col_p2) {
 		if (ball->dx > 0) {
 			ball->dx += 1;
 		} else {
 			ball->dx -= 1;
 		}
 
-		if (abs(ball->dx) > 9) {
-			ball->dx = 9;
+		if (abs(ball->dx) > MAX_BALL_SPEED) {
+			if (ball->dx < 0) {
+				ball->dx = -MAX_BALL_SPEED;
+			} else {
+				ball->dx = MAX_BALL_SPEED;
+			}
 		}
 
     		ball->dx *= -1;
 	}
 
 	ball->y += ball->dy;
-	ball->x += ball->dx;
+
+	if (is_col_p1) {
+		ball->x = player1->x + player1->w;
+	} else if (is_col_p2) {
+		ball->x = player2->x - ball->w;
+	} else {
+		ball->x += ball->dx;
+	}
 
 	if (ball->y < 0) {
 		ball->y = 0;
@@ -243,6 +257,8 @@ int main(int argc, char *argv[])
     		rect.width = WIDTH;
     		rect.height = HEIGHT;
     		ioctl(fb_desc, 0x4680, &rect);
+
+    		//usleep(10 * 1000);
 	}
 
 	munmap(fb_mmap, WIDTH * HEIGHT * 2);

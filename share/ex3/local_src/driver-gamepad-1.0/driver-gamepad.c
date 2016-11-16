@@ -21,6 +21,7 @@ static struct fasync_struct *fasync;
 
 static void signal_game(void)
 {
+	/* Send async SIGIO signal to any registered listeners. */
 	kill_fasync(&fasync, SIGIO, POLL_IN);
 }
 
