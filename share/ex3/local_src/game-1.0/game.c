@@ -14,7 +14,6 @@
 
 #define WIDTH 320
 #define HEIGHT 240
-#define BIT_DEPTH 16
 
 #define PADDLE_HEIGHT 30
 #define PADDLE_WIDTH 10
@@ -68,7 +67,6 @@ void clear_object(struct gameobject *object)
 {
 	draw_rect(object->x, object->y, object->w, object->h, 0, 0, 0);
 }
-
 
 void draw_gameobject(struct gameobject *object)
 {
@@ -175,7 +173,7 @@ void update_player(struct gameobject *player, int buttons)
 	}
 }
 
-/* AABB collition detection algorithm */
+/* AABB collision detection algorithm */
 int is_colliding(struct gameobject *obj1, struct gameobject *obj2)
 {
 	return obj1->x < obj2->x + obj2->w &&
@@ -239,7 +237,6 @@ void update_ball(struct gameobject *ball, struct gameobject *player1, struct gam
 
 int main(int argc, char *argv[])
 {
-	/* printf("Hello World, I'm game!\n"); */
 
 	int file_flags;
 
@@ -254,7 +251,6 @@ int main(int argc, char *argv[])
 	fcntl(gamepad_desc, F_SETOWN, getpid());
 	file_flags = fcntl(gamepad_desc, F_GETFL);
 	fcntl(gamepad_desc, F_SETFL, file_flags | FASYNC);
-	
 
 	fb_desc = open("/dev/fb0", O_RDWR);
 	if (fb_desc < 0) {
@@ -294,7 +290,6 @@ int main(int argc, char *argv[])
     		draw_gameobject(&ball);
 
     		/* Update framebuffer areas */
-
     		update_fb(&player1);
     		update_fb(&player2);
     		update_fb(&ball);

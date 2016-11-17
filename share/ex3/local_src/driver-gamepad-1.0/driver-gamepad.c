@@ -16,6 +16,8 @@
 #define DEVICE_NAME "TDT4258"
 
 #define IO_REGION_SIZE 0x11c /* GPIO_IFC - GPIO_PA_BASE */
+#define GPIO_EVEN_IRQ 17
+#define GPIO_ODD_IRQ 18
 
 static struct fasync_struct *fasync;
 
@@ -27,27 +29,12 @@ static void signal_game(void)
 
 irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
-
-	/* printk("irq: %d\n", irq); */
-
 	/* Clear interrupt */
 	iowrite32(*GPIO_IF, GPIO_IFC);
 
 	signal_game();
 
 	return IRQ_HANDLED;
-}
-
-static int gamepad_open(struct inode *inode, struct file *file)
-{
-    printk(KERN_INFO "open sample char device\n");
-    return 0;
-}
-
-static int gamepad_release(struct inode *inode, struct file *file)
-{
-    printk(KERN_INFO "release sample char device\n");
-    return 0;
 }
 
 static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, loff_t *offset)
@@ -62,11 +49,6 @@ static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, l
     	return size - res;
 }
 
-static ssize_t gamepad_write(struct file *file, const char __user *data, size_t size, loff_t *offset)
-{
-	return size;
-}
-
 static int gamepad_async(int fd, struct file *filp, int onflag)
 {
 	return fasync_helper(fd, filp, onflag, &fasync);
@@ -75,24 +57,12 @@ static int gamepad_async(int fd, struct file *filp, int onflag)
 static struct file_operations driver_fops = {
 	.owner = THIS_MODULE,
 	.read = gamepad_read,
-	.write = gamepad_write,
-	.open = gamepad_open,
-	.release = gamepad_release,
 	.fasync = gamepad_async
 };
 
 static dev_t driver_major;
 static struct class *driver_class;
 static struct cdev *driver_cdev;
-
-/*
- * template_init - function to insert this module into kernel space
- *
- * This is the first of two exported functions to handle inserting this
- * code into a running kernel
- *
- * Returns 0 if successfull, otherwise -1
- */
 
 static int __init gamepad_module_init(void)
 {
@@ -114,14 +84,14 @@ static int __init gamepad_module_init(void)
 
 	/* Interrupts */
 
-	irq_request_res = request_irq(17, (irq_handler_t) gpio_handler, 0, DEVICE_NAME, 0);
+	irq_request_res = request_irq(GPIO_EVEN_IRQ, (irq_handler_t) gpio_handler, 0, DEVICE_NAME, 0);
 	if (irq_request_res < 0) {
-		printk(KERN_ALERT "%s: request_irq failed with %d\n", __func__, irq_request_res);
+		printk(KERN_ALERT "request_irq failed with %d\n", irq_request_res);
 	}
 
-	irq_request_res = request_irq(18, (irq_handler_t) gpio_handler, 0, DEVICE_NAME, 0);
+	irq_request_res = request_irq(GPIO_ODD_IRQ, (irq_handler_t) gpio_handler, 0, DEVICE_NAME, 0);
 	if (irq_request_res < 0) {
-		printk(KERN_ALERT "%s: request_irq failed with %d\n", __func__, irq_request_res);
+		printk(KERN_ALERT "request_irq failed with %d\n", irq_request_res);
 	}
 
 	/* Set pins 0-7 of port C to input */ 
@@ -160,13 +130,6 @@ static int __init gamepad_module_init(void)
 	return 0;
 }
 
-/*
- * template_cleanup - function to cleanup this module from kernel space
- *
- * This is the second of two exported functions to handle cleanup this
- * code from a running kernel
- */
-
 static void __exit gamepad_module_cleanup(void)
 {
 	device_destroy(driver_class, driver_major);
@@ -182,4 +145,3 @@ module_exit(gamepad_module_cleanup);
 
 MODULE_DESCRIPTION("TDT4258 gamepad driver module");
 MODULE_LICENSE("GPL");
-
