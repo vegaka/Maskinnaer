@@ -21,12 +21,23 @@
 
 static struct fasync_struct *fasync;
 
+/*
+ *  Sends a SIGIO signal to tell any listeners that a gamepad interrupt has happened.
+ *
+ *  Arguments: None
+ *  Returns: void
+ */
 static void signal_game(void)
 {
-	/* Send async SIGIO signal to any registered listeners. */
 	kill_fasync(&fasync, SIGIO, POLL_IN);
 }
 
+/*
+ *  This function is called whenever a GPIO interrupt happens.
+ *
+ *  Arguments: None
+ *  Returns: void
+ */
 irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
 	/* Clear interrupt */

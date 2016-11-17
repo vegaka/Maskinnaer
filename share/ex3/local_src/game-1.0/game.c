@@ -42,6 +42,13 @@ struct gameobject
 	int b;
 };
 
+/*
+ *  Handles SIGIO signals from the gamepad driver.
+ *  When a signal arrives it reads the button values from the driver.
+ *
+ *  Arguments: signum: the signal number which will always be SIGIO
+ *  Returns: void
+ */
 void driver_signal_handler(int signum)
 {
 	/* printf("Recieved signal: %d\n", signum); */
@@ -50,6 +57,18 @@ void driver_signal_handler(int signum)
 	/* printf("Read buttons: %d\n", buttons); */
 }
 
+/*
+ *  Draws the rectangle specified by the arguments with a color that is also specifies by the arguments.
+ *
+ *  Arguments: x: the x position of the upper left corner of the rectangle
+ *             y: the y position of the upper left corner of the rectangle
+ *             w: the width of the rectangle
+ *             h: the height of the rectangle
+ *             r: the value for the red color channel, the last 5 bits are used in the color
+ *             g: the value for the green color channel, the last 6 bits are used in the color
+ *             b: the value for the blue color channel, the last 5 bits are used in the color
+ *  Returns: void
+ */
 void draw_rect(int x, int y, int w, int h, int r, int g, int b)
 {
 	int i;
@@ -63,36 +82,59 @@ void draw_rect(int x, int y, int w, int h, int r, int g, int b)
     	}
 }
 
+/*
+ *  Clears the gameobject from the framebuffer by drawing a black rectangle over the object
+ *
+ *  Arguments: object: The object to clear
+ *  Returns: void
+ */
 void clear_object(struct gameobject *object)
 {
 	draw_rect(object->x, object->y, object->w, object->h, 0, 0, 0);
 }
 
+/*
+ *  Draws the gameobject in the framebuffer at the position specified by the object,
+ *  and with the color specified by the object.
+ *
+ *  Arguments: object: The object to draw
+ *  Returns: void
+ */
 void draw_gameobject(struct gameobject *object)
 {
 	draw_rect(object->x, object->y, object->w, object->h, object->r, object->g, object->b);
 }
 
+/*
+ *  Updates the object on the actual screen and not only in the framebuffers memory.
+ *
+ *  Arguments: object: The object to draw to the actual screen
+ *  Returns: void
+ */
 void update_fb(struct gameobject *object)
 {
+	/* Remove the current drawing of the object */
 	struct fb_copyarea old_area;
 	old_area.dx = object->oldx;
 	old_area.dy = object->oldy;
 	old_area.width = object->w;
 	old_area.height = object->h + 1;
 
+	/* Keep the rectangle within the framebuffer bounds */
 	if (old_area.dy + old_area.height > HEIGHT) {
 		old_area.height = HEIGHT - old_area.dy;
 	}
 
 	ioctl(fb_desc, 0x4680, &old_area);
 
+	/* Paint the object at its new location */
 	struct fb_copyarea new_area;
 	new_area.dx = object->x;
 	new_area.dy = object->y;
 	new_area.width = object->w;
 	new_area.height = object->h;
 
+	/* Keep the rectangle within the framebuffer bounds */
 	if (new_area.dy + new_area.height > HEIGHT) {
 		new_area.height = HEIGHT - new_area.dy;
 	}
@@ -100,6 +142,12 @@ void update_fb(struct gameobject *object)
 	ioctl(fb_desc, 0x4680, &new_area);
 }
 
+/*
+ *  Creates a white ball at the middle of the screen.
+ *
+ *  Arguments: ball: The ball to initialize
+ *  Returns: void
+ */
 void init_ball(struct gameobject *ball)
 {
 	ball->x = (WIDTH / 2) - (BALL_SIZE / 2);
@@ -113,6 +161,16 @@ void init_ball(struct gameobject *ball)
 	ball->b = 0xff;
 }
 
+/*
+ *  Initializes the paddle at the specified x position with the specified color.
+ *
+ *  Arguments: paddle: the paddle to initialize
+ *                  x: the x position of the to left corner of the paddle
+ *                  r: the value for the red color channel, the last 5 bits are used in the color
+ *                  g: the value for the green color channel, the last 6 bits are used in the color
+ *                  b: the value for the blue color channel, the last 5 bits are used in the color
+ *  Returns: void
+ */
 void init_paddle(struct gameobject *paddle, int x, int r, int g, int b)
 {
 	paddle->x = x;
@@ -126,6 +184,14 @@ void init_paddle(struct gameobject *paddle, int x, int r, int g, int b)
 	paddle->b = b;
 }
 
+/*
+ *  Initializes and draws the initial game state
+ *
+ *  Arguments: player1: the left paddle
+ *             player2: the right paddle
+ *                ball: the ball used to play
+ *  Returns: void
+ */
 void init_game(struct gameobject *player1, struct gameobject *player2, struct gameobject *ball)
 {
 	init_paddle(player1, 20, 0xff, 0, 0);
