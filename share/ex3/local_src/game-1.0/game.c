@@ -21,12 +21,19 @@
 #define BALL_SIZE 8
 #define MAX_BALL_SPEED 7
 
+/* The file desciptor to the gamepad driver file */
 int gamepad_desc;
+
+/* Variable to hold the state of the gamepad buttons */
 short buttons;
 
+/* The file desciptor to the framebuffer */
 int fb_desc;
+
+/* Pointer to the memory mapped framebuffer memory */
 unsigned short *fb_mmap;
 
+/* Generic object used in the game */
 struct gameobject
 {
 	int x;
@@ -46,7 +53,7 @@ struct gameobject
  *  Handles SIGIO signals from the gamepad driver.
  *  When a signal arrives it reads the button values from the driver.
  *
- *  Arguments: signum: the signal number which will always be SIGIO
+ *  Arguments: signum: The signal number which will always be SIGIO
  *  Returns: void
  */
 void driver_signal_handler(int signum)
@@ -60,13 +67,13 @@ void driver_signal_handler(int signum)
 /*
  *  Draws the rectangle specified by the arguments with a color that is also specifies by the arguments.
  *
- *  Arguments: x: the x position of the upper left corner of the rectangle
- *             y: the y position of the upper left corner of the rectangle
- *             w: the width of the rectangle
- *             h: the height of the rectangle
- *             r: the value for the red color channel, the last 5 bits are used in the color
- *             g: the value for the green color channel, the last 6 bits are used in the color
- *             b: the value for the blue color channel, the last 5 bits are used in the color
+ *  Arguments: x: The x position of the upper left corner of the rectangle
+ *             y: The y position of the upper left corner of the rectangle
+ *             w: The width of the rectangle
+ *             h: The height of the rectangle
+ *             r: The value for the red color channel, the last 5 bits are used in the color
+ *             g: The value for the green color channel, the last 6 bits are used in the color
+ *             b: The value for the blue color channel, the last 5 bits are used in the color
  *  Returns: void
  */
 void draw_rect(int x, int y, int w, int h, int r, int g, int b)
@@ -164,11 +171,11 @@ void init_ball(struct gameobject *ball)
 /*
  *  Initializes the paddle at the specified x position with the specified color.
  *
- *  Arguments: paddle: the paddle to initialize
- *                  x: the x position of the to left corner of the paddle
- *                  r: the value for the red color channel, the last 5 bits are used in the color
- *                  g: the value for the green color channel, the last 6 bits are used in the color
- *                  b: the value for the blue color channel, the last 5 bits are used in the color
+ *  Arguments: paddle: The paddle to initialize
+ *                  x: The x position of the to left corner of the paddle
+ *                  r: The value for the red color channel, the last 5 bits are used in the color
+ *                  g: The value for the green color channel, the last 6 bits are used in the color
+ *                  b: The value for the blue color channel, the last 5 bits are used in the color
  *  Returns: void
  */
 void init_paddle(struct gameobject *paddle, int x, int r, int g, int b)
@@ -187,9 +194,9 @@ void init_paddle(struct gameobject *paddle, int x, int r, int g, int b)
 /*
  *  Initializes and draws the initial game state
  *
- *  Arguments: player1: the left paddle
- *             player2: the right paddle
- *                ball: the ball used to play
+ *  Arguments: player1: The left paddle
+ *             player2: The right paddle
+ *                ball: The ball used to play
  *  Returns: void
  */
 void init_game(struct gameobject *player1, struct gameobject *player2, struct gameobject *ball)
@@ -207,8 +214,15 @@ void init_game(struct gameobject *player1, struct gameobject *player2, struct ga
 	ioctl(fb_desc, 0x4680, &rect);
 }
 
-/* Buttons: Last four bits indicate which buttons are pressed for the specific player */
-/* A zero means the button is pressed */
+/*
+ *  Performs one update for the specified player.
+ *
+ *  Arguments: player: The player to update
+ *            buttons: The current status of the buttons for the player.
+ *                     The last four bits indicate which buttons are pressed for
+ *                     the specific player. A zero means the button is pressed.
+ *  Returns: void
+ */
 void update_player(struct gameobject *player, int buttons)
 {
 	int up;
@@ -217,6 +231,7 @@ void update_player(struct gameobject *player, int buttons)
 	player->oldx = player->x;
 	player->oldy = player->y;
 
+	/* Get the status of the up and down buttons. */
 	up = (~buttons) & (1 << 1);
 	down = (~buttons) & (1 << 3);
 
@@ -232,6 +247,7 @@ void update_player(struct gameobject *player, int buttons)
 
 	player->y += player->dy;
 
+	/* Check bounds */
 	if (player->y < 0) {
 		player->y = 0;
 	} else if (player->y + player->h > HEIGHT) {
@@ -239,7 +255,13 @@ void update_player(struct gameobject *player, int buttons)
 	}
 }
 
-/* AABB collision detection algorithm */
+/* 
+ *  AABB collision detection algorithm.
+ *
+ *  Arguments: obj1: The first object used in the collision testing
+ *             obj2: The other object used in the collision testing
+ *  Returns: int: 0 if the objects do not collide, 1 if they do
+ */
 int is_colliding(struct gameobject *obj1, struct gameobject *obj2)
 {
 	return obj1->x < obj2->x + obj2->w &&
@@ -248,8 +270,17 @@ int is_colliding(struct gameobject *obj1, struct gameobject *obj2)
    		obj1->h + obj1->y > obj2->y;
 }
 
+/* 
+ *  Performs one update for the specified ball
+ *
+ *  Arguments: ball: The ball to update
+ *          player1: The left paddle to check collision with
+ *          player2: The right paddle to check collision with
+ *  Returns: void
+ */
 void update_ball(struct gameobject *ball, struct gameobject *player1, struct gameobject *player2)
 {
+	/* Check for collisions */
 	int is_col_p1 = is_colliding(ball, player1);
 	int is_col_p2 = is_colliding(ball, player2);
 
@@ -263,6 +294,7 @@ void update_ball(struct gameobject *ball, struct gameobject *player1, struct gam
 			ball->dx -= 1;
 		}
 
+		/* Prevent the ball from moving too fast */
 		if (abs(ball->dx) > MAX_BALL_SPEED) {
 			if (ball->dx < 0) {
 				ball->dx = -MAX_BALL_SPEED;
@@ -276,6 +308,7 @@ void update_ball(struct gameobject *ball, struct gameobject *player1, struct gam
 
 	ball->y += ball->dy;
 
+	/* Push the ball out of the paddle */
 	if (is_col_p1) {
 		ball->x = player1->x + player1->w;
 	} else if (is_col_p2) {
@@ -284,6 +317,7 @@ void update_ball(struct gameobject *ball, struct gameobject *player1, struct gam
 		ball->x += ball->dx;
 	}
 
+	/* Check bounds */
 	if (ball->y < 0) {
 		ball->y = 0;
 		ball->dy *= -1;
@@ -303,7 +337,6 @@ void update_ball(struct gameobject *ball, struct gameobject *player1, struct gam
 
 int main(int argc, char *argv[])
 {
-
 	int file_flags;
 
 	gamepad_desc = open(GAMEPAD_NAME, 0);
@@ -313,10 +346,14 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
+	/* Register SIGIO handler and tell the driver we want to 
+	*  recieve async signals from it.
+	*/
 	signal(SIGIO, driver_signal_handler);
 	fcntl(gamepad_desc, F_SETOWN, getpid());
 	file_flags = fcntl(gamepad_desc, F_GETFL);
 	fcntl(gamepad_desc, F_SETFL, file_flags | FASYNC);
+
 
 	fb_desc = open("/dev/fb0", O_RDWR);
 	if (fb_desc < 0) {
@@ -324,6 +361,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
+	/* Memory map the framebuffer to make it easier to work with */
 	fb_mmap = (unsigned short *) mmap(NULL, WIDTH * HEIGHT * 2, PROT_READ | PROT_WRITE, MAP_SHARED, fb_desc, 0);
 	if ((int) fb_mmap == -1) {
         	printf("Error: failed to map framebuffer device to memory\n");
@@ -331,12 +369,14 @@ int main(int argc, char *argv[])
         	exit(-1);
     	}
 
+
     	struct gameobject player1;
     	struct gameobject player2;
     	struct gameobject ball;
 
     	init_game(&player1, &player2, &ball);
 
+    	/* Set the initial speed and direction of the ball */
     	ball.dx = 3;
     	ball.dy = 4;
 
@@ -360,9 +400,11 @@ int main(int argc, char *argv[])
     		update_fb(&player2);
     		update_fb(&ball);
 
+    		/* Sleep for 20 ms */
     		usleep(20 * 1000);
 	}
 
+	/* Cleanup */
 	munmap(fb_mmap, WIDTH * HEIGHT * 2);
 	close(fb_desc);
 	close(gamepad_desc);
