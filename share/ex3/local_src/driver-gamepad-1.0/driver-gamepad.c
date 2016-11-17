@@ -35,8 +35,8 @@ static void signal_game(void)
 /*
  *  This function is called whenever a GPIO interrupt happens.
  *
- *  Arguments: None
- *  Returns: void
+ *  Arguments: TODO
+ *  Returns: TODO
  */
 irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 {
@@ -48,6 +48,12 @@ irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 	return IRQ_HANDLED;
 }
 
+/*
+ *  
+ *
+ *  Arguments: None
+ *  Returns: void
+ */
 static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, loff_t *offset)
 {
     	int res;
