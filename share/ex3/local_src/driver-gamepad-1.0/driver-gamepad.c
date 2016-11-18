@@ -35,9 +35,9 @@ static void signal_game(void)
 /*
  *  This function is called whenever a GPIO interrupt happens.
  *
- *  Arguments: irq:
- *          dev_id:
- *            regs:
+ *  Arguments: irq: The irq number for the interrupt
+ *          dev_id: The dev_id that was given to request_irq() when registering the handler
+ *            regs: The processor state and registers before the servicing the interrupt
  *  Returns: irqreturn_t: The status of the irq
  */
 irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
@@ -53,11 +53,11 @@ irqreturn_t gpio_handler(int irq, void *dev_id, struct pt_regs *regs)
 /*
  *  Reads the status of the gamepad buttons and copies this into the buffer provided by the user.
  *
- *  Arguments: file:
+ *  Arguments: file: The file pointer for the file of this module
  *             data: The buffer to copy data into
  *             size: The amount of data to copy in bytes
  *           offset: The offset specifying where to start copying data
- *  Returns: ssize_t: The amount of bytes the function failed to read.
+ *  Returns: ssize_t: The amount of bytes read.
  */
 static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, loff_t *offset)
 {
@@ -72,18 +72,21 @@ static ssize_t gamepad_read(struct file *file, char __user *data, size_t size, l
 }
 
 /*
- *  
+ *  Invoked when the FASYNC flag on the file for this module is changed.
+ *  Uses the OS helper for handling the invokation.
  *
- *  Arguments: fd:
- *           filp:
- *         onflag:
- *  Returns: int:
+ *  Arguments: fd: The file descriptor
+ *           filp: The file pointer for the file of this module
+ *         onflag: 0 if the FASYNC flag is removed, positive if it is added
+ *  Returns: int: Negative on error, 0 if no changes happened and positive if
+ *                it added or deleted the entry.
  */
 static int gamepad_async(int fd, struct file *filp, int onflag)
 {
 	return fasync_helper(fd, filp, onflag, &fasync);
 }
 
+/* Structs needed for the module */
 static struct file_operations driver_fops = {
 	.owner = THIS_MODULE,
 	.read = gamepad_read,
